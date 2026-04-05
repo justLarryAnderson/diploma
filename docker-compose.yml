@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: diploma_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: diploma
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"   # ← меняем внешний порт на 5433
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: diploma_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/diploma
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+      - model_cache:/app/models  # для хранения загруженных моделей
+      - dataset_storage:/app/data/datasets  # для хранения датасетов
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  model_cache:
+  dataset_storage:
